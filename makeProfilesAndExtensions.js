@@ -61,7 +61,7 @@ let arAllIgs = ["nzbase","nhi","hpi","northernRegion"]      //all the known IGs
 // =========================   defined Profiles   ================
 
 let onlineServer = "http://build.fhir.org/ig/HL7NZ/";   //where the IGs are
-let onlineBranch = "/branches/master/";     //currently the dev master branch
+let onlineBranch = "/branches/main/";     //currently the dev master branch
 
 
 let ar = []

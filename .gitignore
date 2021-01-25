@@ -1,0 +1,9 @@
+# Temporary folders # (at any level)
+#####################
+.DS_Store
+Thumbs.db
+/fsh-generated
+/input-cache
+/output
+/template
+/temp
