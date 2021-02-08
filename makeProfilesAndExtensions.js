@@ -9,7 +9,7 @@
  * */
 
 let fs = require('fs');
-let igRoot = "/Users/davidhay/IG/";
+let igRoot = "/Users/wendy/IG/";
 
 //let uploadServer = "http://home.clinfhir.com:8054/baseR4/"
 //let 

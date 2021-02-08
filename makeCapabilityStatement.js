@@ -2,21 +2,24 @@
 /**
  * make the CapabilityStatement XML file for terminology
  * 
- * execute: ./makeProfilesAndExtensions {IG}
+ * execute: ./makeCapabilityStatement {IG}
  * 
  * 
  * */
 
 let fs = require('fs');
-let igRoot = "/Users/davidhay/IG/";
-const { Remarkable } = require('../globalScripts/node_modules/remarkable');
+//let igRoot = "/Users/davidhay/IG/";
+let igRoot = "/Users/wendy/IG/";
+
+//const { Remarkable } = require('../globalScripts/node_modules/remarkable');
+const { Remarkable } = require('../common/node_modules/remarkable');
 var md = new Remarkable();
 
 
 
 let igName = process.argv[2];   
 if (!igName) {
-    console.log("No IG specified. Must be in the command eg: ./makeTerminology nhi")
+    console.log("No IG specified. Must be in the command eg: ./makeCapabilityStatement nhi")
     return;
 }
 
@@ -37,6 +40,9 @@ console.log("IG is located at "+ fullPath);
 console.log('Location of CapabilityStatement:' + rootPath)
 console.log('Writing output to ' + outFile1)
 
+let hashInteraction = {}
+hashInteraction['read'] = "Supports retrieving a resource by its id. Will return a single resource."
+hashInteraction['search-type'] = "Queries against the resource type. Will return a Bundle (even if there are no matching resources)."
 
 let ar = []
 ar.push("<div xmlns='http://www.w3.org/1999/xhtml'>")
@@ -75,11 +81,13 @@ if (fs.existsSync(rootPath)) {
                     if (res.interaction) {
                         ar.push("<strong>Interactions</strong>")
                         ar.push("<table class='table table-bordered table-condensed'>")
-                        ar.push("<tr><th width='60%'>Code</th><th width='40%'>Documentation</th></tr>")
+                        ar.push("<tr><th width='30%'>Code</th><th width='70%'>Documentation</th></tr>")
                         res.interaction.forEach(function(int){
                             ar.push("<tr>")
                             ar.push(`<td>${int.code}</td>`)
-                            let documentation = cleanText(int.documentation) || ""
+                            let documentation = cleanText(int.documentation) || hashInteraction[int.code]
+
+
                             ar.push(`<td>${documentation}</td>`)
                             ar.push("</tr>")
     
@@ -90,17 +98,31 @@ if (fs.existsSync(rootPath)) {
                     if (res.searchParam) {
                         ar.push("<strong>Search Parameters</strong>")
                         ar.push("<table class='table table-bordered table-condensed'>")
-                        ar.push("<tr><th width='15%'>Name</th><th>Type</th> <th>Definition</th><th width='40%'>Documentation</th></tr>")
+
+                        //ar.push("<tr><th width='15%'>Name</th><th>Type</th> <th>Definition</th><th width='40%'>Documentation</th></tr>")
+                        ar.push("<tr><th width='15%'>Name</th><th>Type</th><th width='70%'>Documentation</th></tr>")
+                       
                         res.searchParam.forEach(function(int){
                             ar.push("<tr>")
                             ar.push(`<td>${int.name}</td>`)
-                            ar.push(`<td>${int.type}</td>`)
+
+
+                            //http://hl7.org/fhir/search.html#reference
+
+                            ar.push(`<td><a target='_blank' href="http://hl7.org/fhir/search.html#${int.type}">${int.type}</a></td>`)
+/*
                             let definition =  ""
                             if (int.definition) {
                                 definition = int.definition
                             } 
                             ar.push(`<td>${definition}</td>`)
+                            */
                             let documentation = cleanText(int.documentation) || ""
+
+                            if (int.definition) {
+                                documentation = "<div>Definition: " + int.definition + "</div>" + documentation
+                            } 
+
                             ar.push(`<td>${documentation}</td>`)
                             ar.push("</tr>")
     
