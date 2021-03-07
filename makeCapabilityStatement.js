@@ -8,11 +8,11 @@
  * */
 
 let fs = require('fs');
-//let igRoot = "/Users/davidhay/IG/";
-let igRoot = "/Users/wendy/IG/";
+let igRoot = "/Users/davidhay/IG/";
+//let igRoot = "/Users/wendy/IG/";
 
-//const { Remarkable } = require('../globalScripts/node_modules/remarkable');
-const { Remarkable } = require('../common/node_modules/remarkable');
+const { Remarkable } = require('../globalScripts/node_modules/remarkable');
+//const { Remarkable } = require('../common/node_modules/remarkable');
 var md = new Remarkable();
 
 
@@ -69,7 +69,9 @@ if (fs.existsSync(rootPath)) {
 
             capStmt.rest.forEach(function(rest){
                 rest.resource.forEach(function(res){
+
                     ar.push(`<a name="${res.type}"> </a>`)   
+                    
                     ar.push(`<h3>${res.type}</h3>`)   
 
                     if (res.documentation) {

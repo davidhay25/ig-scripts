@@ -9,13 +9,18 @@
  * */
 
 let fs = require('fs');
-let igRoot = "/Users/wendy/IG/";
-
+//let igRoot = "/Users/wendy/IG/";
+let igRoot = "/Users/davidhay/IG/";
 //let uploadServer = "http://home.clinfhir.com:8054/baseR4/"
 //let 
 
 //retrieve the IG
 //console.log(process.argv);
+
+let fmmExtensionUrl = "http://hl7.org/fhir/StructureDefinition/structuredefinition-fmm"
+
+let addFMM = true;      //pass in on the command line
+let addStatus = true;
 
 let igName = process.argv[2];   
 if (!igName) {
@@ -61,8 +66,9 @@ let arAllIgs = ["nzbase","nhi","hpi","northernRegion"]      //all the known IGs
 // =========================   defined Profiles   ================
 
 let onlineServer = "http://build.fhir.org/ig/HL7NZ/";   //where the IGs are
-let onlineBranch = "/branches/main/";     //currently the dev master branch
 
+//let onlineBranch = "/branches/main/";     //currently the dev master branch
+let onlineBranch = "/branches/master/";     //currently the dev master branch
 
 let ar = []
 ar.push("<div xmlns='http://www.w3.org/1999/xhtml'>")
@@ -91,7 +97,8 @@ if (fs.existsSync(fullFolderPath)) {
                     if (profile.type !== 'Extension') {
                         ar.push("<tr>")
         
-                        let link = onlineServer + igName + onlineBranch + "StructureDefinition-" + profile.id + ".html";
+                        let link = "StructureDefinition-" + profile.id + ".html";
+                        //let link = onlineServer + igName + onlineBranch + "StructureDefinition-" + profile.id + ".html";
             
                         ar.push("<td><a href='"+link+"'>" + profile.id + "</a></td>")
                         ar.push("<td>" + profile.url + "</td>")
@@ -135,7 +142,16 @@ ar.push("<div xmlns='http://www.w3.org/1999/xhtml'>")
 
 ar.push("<br/><strong>Extensions defined in this guide</strong><br/><br/>")
 ar.push("<table width='100%' border='1' cellspacing='0' cellpadding='5px'>")
-ar.push("<tr><th>Id</th><th>Url</th><th>Context of Use</th><th>Description</th></tr>")
+ar.push("<tr><th>Id</th><th>Url</th><th>Context of Use</th><th>Description</th>");
+if (addFMM) {
+    ar.push("<th>FMM</th>")
+}
+
+if (addStatus) {
+    ar.push("<th>Status</th>")
+}
+
+ar.push("</tr>")
 
 //fullFolderPath = "../" + igName + "/input/extensions";
 if (fs.existsSync(fullFolderPath)) {
@@ -149,11 +165,25 @@ if (fs.existsSync(fullFolderPath)) {
             if (ext.type == 'Extension') {
                 addResourceToBundle(bundle,ext)
 
+                let fmm = getExtensionValue(ext,fmmExtensionUrl,'valueInteger') || '0';
+//console.log(fmm)
                 hashExtensions[ext.url] = true;     //make a note of the extension
-                ar.push("<tr>")
+
+                if (addStatus) {
+                    if (ext.status == 'active') {
+                        ar.push("<tr style='background-color:#FFCCCC'>")
+                    } else {
+                        ar.push("<tr>")
+                    }
+                } else {
+                    ar.push("<tr>")
+                }
+
+               
     
-                let link = onlineServer + igName + onlineBranch + "StructureDefinition-" + ext.id + ".html";
-    
+                let link = "StructureDefinition-" + ext.id + ".html";
+                // testing... let link = onlineServer + igName + onlineBranch + "StructureDefinition-" + ext.id + ".html";
+
                 ar.push("<td><a href='"+link+"'>" + ext.id + "</a></td>")
                 ar.push("<td>" + ext.url + "</td>")
                 ar.push("<td>")
@@ -165,6 +195,13 @@ if (fs.existsSync(fullFolderPath)) {
                 ar.push("</td>")
     
                 ar.push("<td>" + cleanText(ext.description) + "</td>")
+                if (addFMM) {
+                    ar.push("<td>" + fmm + "</td>")
+                }
+                if (addStatus) {
+                    ar.push("<td>" + ext.status + "</td>")
+                }
+
                 ar.push("</tr>")
             }
 
@@ -244,7 +281,8 @@ if (fs.existsSync(fullFolderPath)) {
 
                                         ar.push("<tr>")
 
-                                        let link = onlineServer + extDef.ig + onlineBranch + "StructureDefinition-" + extDef.extension.id + ".html";
+                                        let link = "StructureDefinition-" + extDef.extension.id + ".html";
+                                        //let link = onlineServer + extDef.ig + onlineBranch + "StructureDefinition-" + extDef.extension.id + ".html";
 
                                         ar.push("<td><a href='"+link+"'>" + extDef.extension.url + "</a></td>")
 
@@ -289,6 +327,19 @@ fs.writeFileSync(extOutFile1,file1);
 fs.writeFileSync(bundleFile,JSON.stringify(bundle));
 
 
+// get value of an extension valueType = 'valueInteger' or similarrr
+function getExtensionValue(resource,url,valueType) {
+    let result = ""
+    if (resource.extension) {
+        resource.extension.forEach(function(ext){
+            if (ext.url = url) {
+                console.log(ext,valueType)
+                result = ext[valueType]
+            }
+        })
+    }
+    return result
+}
 
 
 //ensure that characters that can update XML are 'escpaed'
