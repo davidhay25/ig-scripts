@@ -142,7 +142,7 @@ ar.push("<div xmlns='http://www.w3.org/1999/xhtml'>")
 
 ar.push("<br/><strong>Extensions defined in this guide</strong><br/><br/>")
 ar.push("<table width='100%' border='1' cellspacing='0' cellpadding='5px'>")
-ar.push("<tr><th>Id</th><th>Url</th><th>Context of Use</th><th>Description</th>");
+ar.push("<tr><th>Id</th><th>Url</th><th>Context of Use</th><th>Description</th><th>Purpose</th>");
 if (addFMM) {
     ar.push("<th>FMM</th>")
 }
@@ -195,6 +195,12 @@ if (fs.existsSync(fullFolderPath)) {
                 ar.push("</td>")
     
                 ar.push("<td>" + cleanText(ext.description) + "</td>")
+                if (ext.purpose) {
+                    ar.push("<td>" + cleanText(ext.purpose) + "</td>")
+                } else {
+                    ar.push("<td></td>")
+                }
+               
                 if (addFMM) {
                     ar.push("<td>" + fmm + "</td>")
                 }
