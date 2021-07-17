@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * make the summary MD file for terminology
- * 
+ * creates the page: /input/pagecontent/terminology.md
  * execute: ./makeTerminology {IG}
  * 
  * 
@@ -10,14 +10,16 @@
 let fs = require('fs');
 let igRoot = "/Users/davidhay/IG/";
 
+let showRetired = false;
+
 let audit = require(igRoot +'scripts/modules/auditTerminology.js')
-console.log(audit)
+//console.log(audit)
 
 
 //import {checkUnusedVS} from 'module/auditTerminology.mjs'
 
 //retrieve the IG
-console.log(process.argv);
+//console.log(process.argv);
 
 let igName = process.argv[2];   
 if (!igName) {
@@ -35,8 +37,6 @@ if ( ! fs.existsSync(fullPath)) {
 
 let rootPath = igRoot + igName +  "/fsh-generated/resources/";
 let outFile = igRoot + igName + "/input/pagecontent/terminology.md";  // for IG publisher
-
-
 
 let bundleFile = igRoot + igName + "/generated/terminology.json"
 
@@ -65,16 +65,16 @@ let arCS = []
 let arVS = []           //active valueSets
 
 let arVS_ret = []       //retired valuesets
-//arVS_ret.push("### Retired ValueSets");
+
 
 
 
 arCS.push("### CodeSystems");
 //arCS.push("\r\n");
 let csText = `
-These are codesystems that have been defined by this guide. They define specific concepts that are included in ValueSets. It is preferabe to use an international code systm such as SNOMED, ICD or LOINC - but this is not always possible.
+These are code systems that have been defined in this guide. They define specific concepts that are included in ValueSets. It is preferable to use an international code system such as SNOMED, ICD or LOINC - but this is not always possible.
 
-Each CodeSystem has a globally unique url that is used to unambiguously identiy it. The url generally refers to a describtion of the codesystem, rather than to the FHIR CodeSystem resource.
+Each CodeSystem resource has a globally unique url that is used to unambiguously identify it. The url generally refers to a description of the codesystem, rather than to the FHIR CodeSystem resource.
 
 The [FHIR spec](http://hl7.org/fhir/terminology-module.html) has much more detail on the use of Terminology in FHIR
 `
@@ -157,6 +157,8 @@ fs.readdirSync(rootPath).forEach(function(file) {
 
 
             vsLne += "</tr>"
+
+            //don't include retired VS in the list
             if (vs.status == 'retired') {
                 arVS_ret.push(vsLne)
             } else {
@@ -193,7 +195,6 @@ arVS_ret.sort();    //sort the retired ValueSets
 
 //---- header for the arVS - active ValueSets
 arVSHeader = []
-//arVSHeader.push("### Active ValueSets");
 arVSHeader.push("<table class='table table-bordered table-condensed'>");
 arVSHeader.push("<tr><th>ValueSet</th><th>Purpose</th><th>Url</th><th>CodeSystem Urls</th></tr>")
 
@@ -205,21 +206,30 @@ arVS1.push("<br/><br/>")
 
 //at this point arVS1 should have the sorted table with only active VSs in it...
 
-let arVS_ret1 = arVSHeader.concat(arVS_ret)
-arVS_ret1.splice(0,0,"### Retired ValueSets");
-arVS_ret1.push("</table>")
-arVS_ret1.push("<br/><br/>")
+
+
+let allVS = arVS1;
+
+if (showRetired && arVS_ret.length > 0) {
+    let arVS_ret1 = arVSHeader.concat(arVS_ret)
+    arVS_ret1.splice(0,0,"### Retired ValueSets");
+    arVS_ret1.push("</table>")
+    arVS_ret1.push("<br/><br/>")
+
+    allVS = arVS1.concat(arVS_ret1)  //all the ValueSets - active & retired
+}
+
 
 //at this point arVS_ret1 has the sorted, retired ValueSets
 
-let allVS = arVS1.concat(arVS_ret1)  //all the ValueSets - active & retired
+ 
 
-//let newAR = arVS.concat(arCS)
 let newAR = allVS.concat(arCS)
 
 let fle = newAR.join('\r\n');
 
-//-----------  call the audit functions - duplicate ValueSet
+
+//-----------  call the audit functions - duplicate ValueSets (by url)
 let dupVSReport = audit.findDuplicateVS(arAuditVS)
 if (dupVSReport) {
     console.log("Duplicate ValueSet definitions found")
@@ -227,22 +237,22 @@ if (dupVSReport) {
 }
 
 
-let unusedVSReport = audit.findUnusedVS(arStructureDefinition,arAuditVS)
+//--------- ValueSets defined but not used
+//arAuditVS is the list of ValueSets in this IG
 
-if (unusedVSReport) {
-    fle += unusedVSReport   //There may be multiple reports...
-    //console.log("ValueSets defined but not used")
-    //fle += "\r\n\r\n### Unused ValueSets\r\n\r\n" + unusedVSReport
+let vo = audit.findUnusedVS(arStructureDefinition,arAuditVS)
+
+let unusedVSReport = vo.unusedVS
+
+if (unusedVSReport) {       //return "" if no unused ones...
+    fle += unusedVSReport   
+
 }
 
+//------- ValueSets referenced but not in the current IG
 
 
 fs.writeFileSync(outFile,fle);      //in sushi
-//fs.writeFileSync(outFile1,fle)      //for ig pub
-
-
-
-
 fs.writeFileSync(bundleFile,JSON.stringify(bundle));
 
 

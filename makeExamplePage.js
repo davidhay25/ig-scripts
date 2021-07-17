@@ -84,7 +84,7 @@ list.forEach(function(file) {
 */
 })
 
-console.log(hash)
+//console.log(hash)
 
 let arReport = []
 arReport.push("<div xmlns='http://www.w3.org/1999/xhtml'>")
@@ -138,7 +138,7 @@ Object.keys(hash).forEach(function(k) {
     arReport.push("<tr><th width='30%'>Description</th><th width='20%'>Id</th></tr>")
                        
     ar.forEach(function(res){
-        console.log(res)
+        //console.log(res)
 
         arReport.push("<tr>");
         //let link = onlineServer + igName + onlineBranch + k + "-" + res.id + ".html";
@@ -157,7 +157,7 @@ Object.keys(hash).forEach(function(k) {
 
 arReport.push("</div>");
 
-console.log(arReport)
+//console.log(arReport)
 let outContents = arReport.join('\n')
 
 

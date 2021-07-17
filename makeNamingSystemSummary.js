@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * make the summary XML file for naming system
- * 
+ * makes the page: input/pagecontent/namingSystems.md
  * execute: ./makeTerminology {IG}
  * 
  * 
@@ -11,7 +11,7 @@ let fs = require('fs');
 let igRoot = "/Users/davidhay/IG/";
 
 //retrieve the IG
-console.log(process.argv);
+//console.log(process.argv);
 
 let igName = process.argv[2];   
 if (!igName) {
