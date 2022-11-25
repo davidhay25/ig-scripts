@@ -1,14 +1,6 @@
 #!/usr/bin/env node
 /**
- * Part of the terminology audit
- * Overall strategy:
- *      copy CodeSystems / ValueSets to a referencei server
- *     
-*     Phase 2 - execute
-        for each VS in the IG
-            perform an expansion of the same url on the term server
-            create a 'diff' page comparing with the IG version (like a spreadsheet - rows = concepts) 
-            save as html page. ? publish in IG as audit page
+ * Upload all the terminology resources for the given IG to a server.
 
  * */
 
@@ -18,7 +10,9 @@
 
  //the server used to hold term. resources from the IG
  //let igServer = "http://home.clinfhir.com:8054/baseR4/"
- let igServer = "http://hapi.fhir.org/baseR4/"
+ //let igServer = "http://hapi.fhir.org/baseR4/"
+ let igServer = "https://r4.ontoserver.csiro.au/fhir/"
+
  
  let igName = process.argv[2];   
  if (!igName) {
@@ -48,6 +42,7 @@
 
  
  //upload all the Codesystems and Valuesets first
+ let ctr = 1
  fs.readdirSync(rootPath).forEach(function(file) {
     //console.log(file)
     let ar = file.split('-')
@@ -59,7 +54,12 @@
         case 'ValueSet' :
         case 'CodeSystem': 
         
-        putFile(url,resource)
+        ctr ++
+
+        setTimeout(function(){
+            putFile(url,resource)
+        },1000* ctr)
+        
 
     }
 })

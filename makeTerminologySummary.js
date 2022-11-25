@@ -9,6 +9,8 @@
 
 let fs = require('fs');
 let igRoot = "/Users/davidhay/IG/";
+let markdown = require( "markdown" ).markdown;
+
 
 let showRetired = false;
 
@@ -74,13 +76,13 @@ arCS.push("### CodeSystems");
 let csText = `
 These are code systems that have been defined in this guide. They define specific concepts that are included in ValueSets. It is preferable to use an international code system such as SNOMED, ICD or LOINC - but this is not always possible.
 
-Each CodeSystem resource has a globally unique url that is used to unambiguously identify it. The url generally refers to a description of the codesystem, rather than to the FHIR CodeSystem resource.
+Each CodeSystem resource has a globally unique url (the canonical url) that is used to unambiguously identify it. The url generally refers to a description of the codesystem, rather than to the FHIR CodeSystem resource.
 
 The [FHIR spec](http://hl7.org/fhir/terminology-module.html) has much more detail on the use of Terminology in FHIR
 `
 arCS.push(csText);
 arCS.push("<table class='table table-bordered table-condensed'>");
-arCS.push("<tr><th>CodeSystem</th><th>Purpose</th><th>CodeSystem Url</th></tr>")
+arCS.push("<tr><th>CodeSystem</th><th>Purpose</th><th>Canonical Url</th></tr>")
 
 
 //initial scan to get hash for codesystem urls to the page in the IG
@@ -92,8 +94,8 @@ fs.readdirSync(rootPath).forEach(function(file) {
         case 'CodeSystem' :
 
             let cs = loadFile(file)
-            let arCs = file.split('.')
-            let csHtmlFile = arCs[0] + '.html'
+            let arCsLne = file.split('.')
+            let csHtmlFile = arCsLne[0] + '.html'
 
             hashCS[cs.url] = csHtmlFile
             break;
@@ -107,6 +109,8 @@ let hashVS = {};
 let arAuditVS = [];         //all the valueSets - use this to detect duplicates....
 let arStructureDefinition = [];     //all the StructureDefinitions - to find unused ValueSets
 //now re-read for all terminology files
+
+let arCsContents = []   //keep separate so we can sort...
 fs.readdirSync(rootPath).forEach(function(file) {
     //console.log(file)
     let ar = file.split('-')
@@ -122,39 +126,21 @@ fs.readdirSync(rootPath).forEach(function(file) {
             addResourceToBundle(bundle,vs)
             hashVS[vs.url] = vs;
             let vsLne = "<tr>"
-            vsLne += "<td width='20%'>" + vs.title + "</td>";
-            vsLne += "<td>" + vs.description + "</td>";
-            //let lne = "| " + vs.title + " | " + vs.description + " | "
+
             let arVs = file.split('.')
             let htmlFile = arVs[0] + '.html'
 
+
+            let vsLink = "<a href='"+ htmlFile +"'>" + vs.title + "</a>";
+            vsLne += "<td width='20%'>" + vsLink+ "</td>";
+            vsLne += "<td>" + parseMarkDown(vs.description) + "</td>";
+            //let lne = "| " + vs.title + " | " + vs.description + " | "
+           
+
             arAuditVS.push({resource:vs,link:htmlFile});        //for the audit routine...
 
-            let vsLink = "<a href='"+ htmlFile +"'>" + vs.url + "</a>";
-            vsLne += "<td>" + vsLink + "</td>";
-
-            vsLne += "<td>" 
-            vs.compose.include.forEach(function(item) {
-
-                let csHtmlFile = hashCS[item.system];
-
-                if (! csHtmlFile && (item.system.indexOf('http://hl7.org/') > -1 )) {
-                    //this is a CS defined in the spec...
-                    let ar = item.system.split('/')
-                    csHtmlFile = "http://hl7.org/fhir/valueset-" + ar[ar.length - 1] + ".html"
-                }
-
-
-                let csLink = "<a href='"+ csHtmlFile +"'>" + item.system + "</a>";
-                if (! csHtmlFile) {
-                    //will be undefined if the codesystem is not defined in the IG
-                    csLink = item.system;
-                } 
-                
-                vsLne += "<div>" + csLink + "</div>"
-            })
-            vsLne += "</td>" 
-
+            //let vsLink = "<a href='"+ htmlFile +"'>" + vs.url + "</a>";
+            vsLne += "<td>" + vs.url + "</td>";
 
             vsLne += "</tr>"
 
@@ -171,20 +157,32 @@ fs.readdirSync(rootPath).forEach(function(file) {
         let cs = loadFile(file)
         addResourceToBundle(bundle,cs)
         let csLne = "<tr>"
-        csLne += "<td width='20%'>" + cs.title + "</td>";
-        csLne += "<td>" + cs.description + "</td>";
+
+        let arCsLne = file.split('.')
+        let csHtmlFile = arCsLne[0] + '.html'
+        let csLink = "<a href='"+ csHtmlFile +"'>" + cs.title + "</a>";
+
+
+        csLne += "<td width='20%'>" + csLink + "</td>";
+        csLne += "<td>" + parseMarkDown(cs.description) + "</td>";
         //let lne = "| " + vs.title + " | " + vs.description + " | "
-        let arCs = file.split('.')
-        let csHtmlFile = arCs[0] + '.html'
-        let csLink = "<a href='"+ csHtmlFile +"'>" + cs.url + "</a>";
-        csLne += "<td>" + csLink + "</td>";
+        
+        csLne += "<td>" + cs.url + "</td>";
         csLne += "</tr>"
-        arCS.push(csLne)
+        arCsContents.push(csLne)
+
+        //arCS.push(csLne)
         break;
 
     }
 
 })
+
+arCsContents.sort()
+arCS = arCS.concat(arCsContents)
+
+
+
 arCS.push("</table>")
 
 
@@ -195,9 +193,26 @@ arVS_ret.sort();    //sort the retired ValueSets
 
 //---- header for the arVS - active ValueSets
 arVSHeader = []
-arVSHeader.push("<table class='table table-bordered table-condensed'>");
-arVSHeader.push("<tr><th>ValueSet</th><th>Purpose</th><th>Url</th><th>CodeSystem Urls</th></tr>")
 
+
+let vsText = `
+These are ValueSets that have been defined in this guide for coded elements. 
+
+Each ValueSet resource has a globally unique url (the [Canonical](http://hl7.org/fhir/references.html#canonical) url) that is used to unambiguously identify it. 
+This url generally should resolve to the to the FHIR ValueSet resource, though the infrastructure 
+to support this is not yet in place. There's a [specific note](http://hl7.org/fhir/valueset.html#ident) in the spec on ValueSet identification.
+
+The [FHIR spec](http://hl7.org/fhir/terminology-module.html) has much more detail on the use of Terminology in FHIR.
+
+`
+
+arVSHeader.push(vsText);
+
+//arCS.push(csText);
+
+arVSHeader.push("<table class='table table-bordered table-condensed'>");
+arVSHeader.push("<tr><th>ValueSet</th><th>Purpose</th><th>Canonical url</th></tr>")
+//arVSHeader.push("<tr><th>ValueSet</th><th>Purpose</th><th>Url</th><th>CodeSystem Urls</th></tr>")
 let arVS1 = arVSHeader.concat(arVS)
 
 arVS1.splice(0,0,"### ValueSets");
@@ -236,7 +251,7 @@ if (dupVSReport) {
     fle += "\r\n\r\n### Duplicated ValueSets\r\n\r\n" + dupVSReport
 }
 
-
+/* don't do this any more...
 //--------- ValueSets defined but not used
 //arAuditVS is the list of ValueSets in this IG
 
@@ -249,13 +264,22 @@ if (unusedVSReport) {       //return "" if no unused ones...
 
 }
 
+*/
+
 //------- ValueSets referenced but not in the current IG
 
 
 fs.writeFileSync(outFile,fle);      //in sushi
 fs.writeFileSync(bundleFile,JSON.stringify(bundle));
 
-
+//convert markdown text to html
+function parseMarkDown(text) {
+    //console.log(text)
+    if (text) {
+        return markdown.toHTML(text)
+    }
+   
+}
 
 function loadFile(path) {
     let fullFileName = rootPath + path;
