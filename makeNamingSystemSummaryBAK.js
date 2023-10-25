@@ -10,8 +10,6 @@
 let fs = require('fs');
 let igRoot = "/Users/davidhay/IG/";
 
-console.log("Make Idenitifer summary")
-
 //retrieve the IG
 //console.log(process.argv);
 
@@ -61,37 +59,12 @@ arNS.push("<table class='table table-bordered table-condensed'>");
 arNS.push("<tr><th>Description</th><th>Url</th><th>Other identifiers</th><th>Responsible</th></tr>")
 
 
-let arResources = []
-//first load all the NamingSystems
 fs.readdirSync(rootPath).forEach(function(file) {
-let ar = file.split('-')
+
+    let ar = file.split('-')
     switch (ar[0]) {
         case 'NamingSystem' :
             let ns = loadFile(file);
-            arResources.push(ns)
-            //console.log(ns)
-            break
-    }
-})
-
-//now sort the array
-arResources.sort(function(a,b){
-    if (a.description > b.description) {
-        return 1
-    } else {
-        return -1
-    }
-})
-
-//now add to the table
-
-arResources.forEach(function(ns){
-//fs.readdirSync(rootPath).forEach(function(file) {
-
-    //let ar = file.split('-')
-    //switch (ar[0]) {
-        //case 'NamingSystem' :
-            //let ns = loadFile(file);
             //console.log(ns)
             let otherId =[];        //to record other ids than url
             let nsLne = "<tr>";
@@ -126,8 +99,8 @@ arResources.forEach(function(ns){
 
             nsLne += "</tr>"
             arNS.push(nsLne)
-          //  break;
-   // }
+            break;
+    }
 
 })
 arNS.push("</table>")
