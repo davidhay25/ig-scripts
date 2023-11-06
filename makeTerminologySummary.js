@@ -4,13 +4,15 @@
  * creates the page: /input/pagecontent/terminology.md
  * execute: ./makeTerminology {IG}
  * 
- * 
+ * 2023-11-6 - sort CS & VS by title
+ * todo - lot's of scruffy stuff in here - we'ree not showing retired VS so could clean it up quite a lot
  * */
 
 let fs = require('fs');
 let igRoot = "/Users/davidhay/IG/";
 let markdown = require( "markdown" ).markdown;
 
+console.log("Terminology")
 
 let showRetired = false;
 
@@ -146,9 +148,9 @@ fs.readdirSync(rootPath).forEach(function(file) {
 
             //don't include retired VS in the list
             if (vs.status == 'retired') {
-                arVS_ret.push(vsLne)
+                arVS_ret.push({line:vsLne,title:vs.title})
             } else {
-                arVS.push(vsLne)
+                arVS.push({line:vsLne,title:vs.title})
             }
            
             break;
@@ -156,6 +158,7 @@ fs.readdirSync(rootPath).forEach(function(file) {
     case 'CodeSystem' :
         let cs = loadFile(file)
         addResourceToBundle(bundle,cs)
+
         let csLne = "<tr>"
 
         let arCsLne = file.split('.')
@@ -169,7 +172,7 @@ fs.readdirSync(rootPath).forEach(function(file) {
         
         csLne += "<td>" + cs.url + "</td>";
         csLne += "</tr>"
-        arCsContents.push(csLne)
+        arCsContents.push({line:csLne,title:cs.title})
 
         //arCS.push(csLne)
         break;
@@ -178,15 +181,44 @@ fs.readdirSync(rootPath).forEach(function(file) {
 
 })
 
-arCsContents.sort()
-arCS = arCS.concat(arCsContents)
+
+console.log("sorting...")
+
+
+arCsContents.sort(function(a,b){
+    //console.log(a.title,b.title)
+    if (a.title > b.title) {
+        return 1
+    } else {
+        return -1
+    }
+})
+
+console.log('---')
+arCsContents.forEach(function(item){
+    console.log(item.title)
+    arCS.push(item.line)
+})
+//arCS = arCS.concat(arCsContents)
 
 
 
 arCS.push("</table>")
 
 
-arVS.sort();    //sort the contents
+
+arVS.sort(function(a,b){
+    //console.log(a.title,b.title)
+    if (a.title > b.title) {
+        return 1
+    } else {
+        return -1
+    }
+})
+
+//arVS.sort();    //sort the contents
+
+
 arVS_ret.sort();    //sort the retired ValueSets
 
 
@@ -213,7 +245,16 @@ arVSHeader.push(vsText);
 arVSHeader.push("<table class='table table-bordered table-condensed'>");
 arVSHeader.push("<tr><th>ValueSet</th><th>Purpose</th><th>Canonical url</th></tr>")
 //arVSHeader.push("<tr><th>ValueSet</th><th>Purpose</th><th>Url</th><th>CodeSystem Urls</th></tr>")
-let arVS1 = arVSHeader.concat(arVS)
+
+
+let arVS1 = arVSHeader
+arVS.forEach(function(item){
+    arVS1.push(item.line)
+})
+
+
+//let arVS1 = arVSHeader.concat(arVS)
+
 
 arVS1.splice(0,0,"### ValueSets");
 arVS1.push("</table>")
@@ -222,14 +263,17 @@ arVS1.push("<br/><br/>")
 //at this point arVS1 should have the sorted table with only active VSs in it...
 
 
-
 let allVS = arVS1;
 
+
+
+//not showing retired at present...
 if (showRetired && arVS_ret.length > 0) {
     let arVS_ret1 = arVSHeader.concat(arVS_ret)
     arVS_ret1.splice(0,0,"### Retired ValueSets");
     arVS_ret1.push("</table>")
     arVS_ret1.push("<br/><br/>")
+
 
     allVS = arVS1.concat(arVS_ret1)  //all the ValueSets - active & retired
 }
@@ -250,6 +294,8 @@ if (dupVSReport) {
     console.log("Duplicate ValueSet definitions found")
     fle += "\r\n\r\n### Duplicated ValueSets\r\n\r\n" + dupVSReport
 }
+
+
 
 /* don't do this any more...
 //--------- ValueSets defined but not used
