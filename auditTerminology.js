@@ -3,6 +3,7 @@
  * Audit the terminology in the IG with a terminology server
  * Overall strategy:
 
+
 *     Process
 
 *       execute ./scripts/uploadTerminology - will upload all term resources to  the server
